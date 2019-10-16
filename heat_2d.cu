@@ -119,7 +119,7 @@ void _troj_line(int *pl,int *pr,int x0,int y0,int x1,int y1)
     }
 }
 
-void troj(int x0, int y0, int x1, int y1, int x2, int y2, int temp, float* matrix) {
+void troj(int x0, int y0, int x1, int y1, int x2, int y2, float temp, float* matrix) {
     int *pl,*pr;        // left/right buffers
     pl=new int[DIM];
     pr=new int[DIM];
@@ -146,7 +146,7 @@ void troj(int x0, int y0, int x1, int y1, int x2, int y2, int temp, float* matri
  * End of Spektre's code example
  */
 
-void triangleFan(int* xpoints, int* ypoints, int points, int temp, float* matrix) {
+void triangleFan(int* xpoints, int* ypoints, int points, float temp, float* matrix) {
     for (int tri = 0; tri < points - 2; tri++) {
         troj(xpoints[0], ypoints[0],
              xpoints[tri + 1], ypoints[tri + 1],
@@ -256,6 +256,14 @@ int main( void ) {
     int xpoints2[points2] = {96, 252, 548, 408};
     int ypoints2[points2] = {740, 768, 208, 164};
     triangleFan(xpoints2, ypoints2, points2, MAX_TEMP, temp);
+
+    int cpoints = 16;
+    int xcircle[cpoints] = {842,820,788,750,711,679,657,650,657,679,711,750,788,820,842,850};
+    int ycircle[cpoints] = {838,870,892,900,892,870,838,800,761,729,707,700,707,729,761,800};
+    triangleFan(xcircle, ycircle, cpoints, MAX_TEMP, temp);
+
+    temp[80 + 700 * DIM] = MIN_TEMP;
+    temp[475 + 400 * DIM] = MIN_TEMP;
 
     HANDLE_ERROR( cudaMemcpy( data.dev_constSrc, temp,
                               imageSize,
