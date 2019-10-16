@@ -77,6 +77,86 @@ struct DataBlock {
     float           frames;
 };
 
+/**
+ * Draw Triangle function from Spektre's Example on stackoverflow
+ * https://stackoverflow.com/a/39062479
+ */
+void _troj_line(int *pl,int *pr,int x0,int y0,int x1,int y1)
+{
+    int *pp;
+    int x,y,kx,ky,dx,dy,k,m,p;
+    // DDA variables (d)abs delta,(k)step direction
+    kx=0; dx=x1-x0; if (dx>0) kx=+1;  if (dx<0) { kx=-1; dx=-dx; }
+    ky=0; dy=y1-y0; if (dy>0) ky=+1;  if (dy<0) { ky=-1; dy=-dy; }
+    // target buffer according to ky direction
+    if (ky>0) pp=pl; else pp=pr;
+    // integer DDA line start point
+    x=x0; y=y0;
+    // fix endpoints just to be sure (wrong division constants by +/-1 can cause that last point is missing)
+    pp[y1]=x1; pp[y0]=x0;
+    if (dx>=dy) { // x axis is major
+        k=dy+dy;
+        m=(dy-dx); m+=m;
+        p=m;
+        for (;;)
+            {
+            pp[y]=x;
+            if (x==x1) break;
+            x+=kx;
+            if (p>0) { y+=ky; p+=m; } else p+=k;
+            }
+    }
+    else {       // y axis is major
+        k=dx+dx;
+        m=(dx-dy); m+=m;
+        p=m;
+        for (;;) {
+            pp[y]=x;
+            if (y==y1) break;
+            y+=ky;
+            if (p>0) { x+=kx; p+=m; } else p+=k;
+        }
+    }
+}
+
+void troj(int x0, int y0, int x1, int y1, int x2, int y2, int temp, float* matrix) {
+    int *pl,*pr;        // left/right buffers
+    pl=new int[DIM];
+    pr=new int[DIM];
+    int x,y,yy0,yy1,xx0,xx1;
+    // boundary line coordinates to buffers
+    _troj_line(pl,pr,x0,y0,x1,y1);
+    _troj_line(pl,pr,x1,y1,x2,y2);
+    _troj_line(pl,pr,x2,y2,x0,y0);
+    // y range
+    yy0=y0; if (yy0>y1) yy0=y1; if (yy0>y2) yy0=y2;
+    yy1=y0; if (yy1<y1) yy1=y1; if (yy1<y2) yy1=y2;
+    // fill with horizontal lines
+    for (y=yy0;y<=yy1;y++) {
+        if (pl[y]<pr[y]) { xx0=pl[y]; xx1=pr[y]; }
+        else             { xx1=pl[y]; xx0=pr[y]; }
+        for (x=xx0;x<=xx1;x++)
+            matrix[x+y*DIM]=temp;
+    }
+    delete[] pl;
+    delete[] pr;
+}
+
+/**
+ * End of Spektre's code example
+ */
+
+void triangleFan(int* xpoints, int* ypoints, int points, int temp, float* matrix) {
+    for (int tri = 0; tri < points - 2; tri++) {
+        troj(xpoints[0], ypoints[0],
+             xpoints[tri + 1], ypoints[tri + 1],
+             xpoints[tri + 2], ypoints[tri + 2],
+             temp,
+             matrix);
+    }
+}
+
+
 void anim_gpu( DataBlock *d, int ticks ) {
     HANDLE_ERROR( cudaEventRecord( d->start, 0 ) );
     dim3    blocks(DIM/16,DIM/16);
@@ -170,34 +250,27 @@ int main( void ) {
                                    desc, DIM, DIM,
                                    sizeof(float) * DIM ) );
 
-    // initialize the constant data
     float *temp = (float*)malloc( imageSize );
-    for (int i=0; i<DIM*DIM; i++) {
-        temp[i] = 0;
-        int x = i % DIM;
-        int y = i / DIM;
-        if ((x>300) && (x<600) && (y>310) && (y<601))
-            temp[i] = MAX_TEMP;
-    }
-    temp[DIM*100+100] = (MAX_TEMP + MIN_TEMP)/2;
-    temp[DIM*700+100] = MIN_TEMP;
-    temp[DIM*300+300] = MIN_TEMP;
-    temp[DIM*200+700] = MIN_TEMP;
-    for (int y=800; y<900; y++) {
-        for (int x=400; x<500; x++) {
-            temp[x+y*DIM] = MIN_TEMP;
-        }
-    }
+
+    int points = 4;
+    int xpoints[points] = {96, 48, 208, 204};
+    int ypoints[points] = {740, 244, 204, 560};
+    triangleFan(xpoints, ypoints, points, MAX_TEMP, temp);
+
+    int points2 = 4;
+    int xpoints2[points] = {96, 252, 548, 408};
+    int ypoints2[points] = {740, 768, 208, 164};
+    triangleFan(xpoints2, ypoints2, points2, MAX_TEMP, temp);
+
+    int points3 = 4;
+    int xpoints3[points] = {548, 624, 484, 452};
+    int ypoints3[points] = {208, 696, 716, 388};
+    triangleFan(xpoints3, ypoints3, points3, MAX_TEMP, temp);
+
     HANDLE_ERROR( cudaMemcpy( data.dev_constSrc, temp,
                               imageSize,
                               cudaMemcpyHostToDevice ) );    
 
-    // initialize the input data
-    for (int y=800; y<DIM; y++) {
-        for (int x=0; x<200; x++) {
-            temp[x+y*DIM] = MAX_TEMP;
-        }
-    }
     HANDLE_ERROR( cudaMemcpy( data.dev_inSrc, temp,
                               imageSize,
                               cudaMemcpyHostToDevice ) );

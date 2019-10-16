@@ -7,6 +7,7 @@ LIBS		= -lGL -lGLU -lglut
 
 CU_SRCS  	= heat.cu 
 CU_SRCS_2D	= heat_2d.cu
+
 OBJS 		= $(CU_SRCS:.cu=.o)
 OBJS_2D 	= $(CU_SRCS_2D:.cu=.o)
 
