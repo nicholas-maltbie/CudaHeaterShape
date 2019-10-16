@@ -252,24 +252,25 @@ int main( void ) {
 
     float *temp = (float*)malloc( imageSize );
 
+    int points2 = 4;
+    int xpoints2[points2] = {96, 252, 548, 408};
+    int ypoints2[points2] = {740, 768, 208, 164};
+    triangleFan(xpoints2, ypoints2, points2, MAX_TEMP, temp);
+
+    HANDLE_ERROR( cudaMemcpy( data.dev_constSrc, temp,
+                              imageSize,
+                              cudaMemcpyHostToDevice ) );   
+
+
+    int points3 = 4;
+    int xpoints3[points3] = {548, 624, 484, 452};
+    int ypoints3[points3] = {208, 696, 716, 388};
+    triangleFan(xpoints3, ypoints3, points3, MAX_TEMP, temp); 
+
     int points = 4;
     int xpoints[points] = {96, 48, 208, 204};
     int ypoints[points] = {740, 244, 204, 560};
     triangleFan(xpoints, ypoints, points, MAX_TEMP, temp);
-
-    int points2 = 4;
-    int xpoints2[points] = {96, 252, 548, 408};
-    int ypoints2[points] = {740, 768, 208, 164};
-    triangleFan(xpoints2, ypoints2, points2, MAX_TEMP, temp);
-
-    int points3 = 4;
-    int xpoints3[points] = {548, 624, 484, 452};
-    int ypoints3[points] = {208, 696, 716, 388};
-    triangleFan(xpoints3, ypoints3, points3, MAX_TEMP, temp);
-
-    HANDLE_ERROR( cudaMemcpy( data.dev_constSrc, temp,
-                              imageSize,
-                              cudaMemcpyHostToDevice ) );    
 
     HANDLE_ERROR( cudaMemcpy( data.dev_inSrc, temp,
                               imageSize,
