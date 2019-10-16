@@ -260,7 +260,7 @@ int main( void ) {
     int cpoints = 16;
     int xcircle[cpoints] = {842,820,788,750,711,679,657,650,657,679,711,750,788,820,842,850};
     int ycircle[cpoints] = {838,870,892,900,892,870,838,800,761,729,707,700,707,729,761,800};
-    triangleFan(xcircle, ycircle, cpoints, MAX_TEMP, temp);
+    triangleFan(xcircle, ycircle, cpoints, (MAX_TEMP + MIN_TEMP) / 2, temp);
 
     temp[80 + 700 * DIM] = MIN_TEMP;
     temp[475 + 400 * DIM] = MIN_TEMP;
